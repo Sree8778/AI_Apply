@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public read for profiles; owner can write their own
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public read for resumes; owner can write their own
+    match /resumes/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Resume drafts — private, owner only
+    match /resumeDrafts/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Interviews — any authenticated user can read (recruiters review results);
+    // only the candidate who owns the session can write
+    match /interviews/{interviewId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && (resource == null || resource.data.candidateId == request.auth.uid)
+        && (request.resource == null || request.resource.data.candidateId == request.auth.uid);
+    }
+
+    // API keys wallet — read-only for owner
+    match /apiKeysWallet/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Jobs — any authenticated user can read; only backend writes
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Applications — authenticated users can read; only backend writes
+    match /applications/{appId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Messages — authenticated users can read; only backend writes
+    match /messages/{msgId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Smart Apply — shared scraped job pool; any authenticated user can read
+    match /scraped_jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Apply sessions — each user's queue and apply history
+    match /apply_sessions/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Chats and messaging subcollection — authenticated users can read/write
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+      match /messages/{msgId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // AI-Apply Pro (ai-apply-assistant) — private, owner-only storage.
+    // Kept isolated from `users/{userId}` above: that collection is
+    // public-read for any authenticated user (by CareerCraft's design),
+    // but this app stores the user's raw Gemini API key alongside their
+    // profiles/applications, which must never be readable by anyone but
+    // its owner.
+    match /ai_apply_users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Everything else — deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

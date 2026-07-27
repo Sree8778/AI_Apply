@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "AI-Apply Assistant Pro",
+  "version": "1.2",
+  "description": "Enterprise-grade automated job application assistant with Bring Your Own Key (BYOK) support.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:5005/*",
+    "http://127.0.0.1:5005/*",
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["content.js"],
+      "all_frames": true
+    }
+  ]
+}

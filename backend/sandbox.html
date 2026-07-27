@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greenhouse | Senior Software Engineer Application</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --border: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 650px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .section-title {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin: 24px 0 16px 0;
+      font-size: 18px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    label span.required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      background-color: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      background-color: #0f172a;
+      cursor: pointer;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-input-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .file-input-label span {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .row .form-group {
+      flex: 1;
+    }
+
+    button[type="submit"] {
+      background-color: var(--primary);
+      color: #0f172a;
+      font-weight: 600;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 16px;
+      transition: background-color 0.15s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .success-banner {
+      display: none;
+      background-color: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #10b981;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <div id="successBanner" class="success-banner">
+      ✓ Application successfully submitted! (Mock Sandbox)
+    </div>
+
+    <h1>Senior Software Engineer</h1>
+    <div class="subtitle">Acme Corporation &bull; Remote, US &bull; Full-time</div>
+
+    <form id="applicationForm" onsubmit="event.preventDefault(); document.getElementById('successBanner').style.display = 'block'; window.scrollTo(0, 0);">
+      
+      <div class="section-title">Personal Info</div>
+      
+      <div class="row">
+        <div class="form-group">
+          <label for="first_name">First Name <span class="required">*</span></label>
+          <input type="text" id="first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name <span class="required">*</span></label>
+          <input type="text" id="last_name" name="last_name" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address <span class="required">*</span></label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number <span class="required">*</span></label>
+        <input type="tel" id="phone" name="phone" required>
+      </div>
+
+      <div class="form-group">
+        <label for="resume">Resume/CV <span class="required">*</span></label>
+        <div class="file-input-wrapper">
+          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
+          <div class="file-input-label" id="fileLabel">
+            <span>Upload a file</span> or drag and drop here
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Web Presence</div>
+
+      <div class="form-group">
+        <label for="linkedin_url">LinkedIn URL</label>
+        <input type="text" id="linkedin_url" name="linkedin_url">
+      </div>
+
+      <div class="form-group">
+        <label for="github_url">GitHub URL</label>
+        <input type="text" id="github_url" name="github_url">
+      </div>
+
+      <div class="form-group">
+        <label for="portfolio_url">Portfolio / Personal Website</label>
+        <input type="text" id="portfolio_url" name="portfolio_url">
+      </div>
+
+      <div class="section-title">Application Questions</div>
+
+      <div class="form-group">
+        <label for="sponsorship">Will you now or in the future require sponsorship for employment visa status? <span class="required">*</span></label>
+        <select id="sponsorship" name="sponsorship" required>
+          <option value="">Select option</option>
+          <option value="yes">Yes, I require sponsorship</option>
+          <option value="no">No, I do not require sponsorship</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="yoe">How many years of professional experience do you have with React and Node.js? <span class="required">*</span></label>
+        <input type="text" id="yoe" name="yoe" required>
+      </div>
+
+      <div class="form-group">
+        <label for="why_us">Why do you want to join Acme Corporation and work on our scaling challenges? <span class="required">*</span></label>
+        <textarea id="why_us" name="why_us" required></textarea>
+      </div>
+
+      <button type="submit">Submit Application</button>
+    </form>
+  </div>
+
+  <script>
+    // Listen for file upload change to update dynamic UI label
+    document.getElementById('resume').addEventListener('change', function(e) {
+      const fileName = e.target.files[0] ? e.target.files[0].name : "Upload a file";
+      document.getElementById('fileLabel').innerHTML = `Selected File: <strong>${fileName}</strong>`;
+    });
+  </script>
+</body>
+</html>

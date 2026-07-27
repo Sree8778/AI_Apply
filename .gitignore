@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Firebase CLI local cache/metadata
+.firebase/
+firebase-debug.log
+
+# Editor/tooling
+.claude/
+
+# Stray backup/recovery files (not part of the actual build)
+*.recovered
+*.reconstructed

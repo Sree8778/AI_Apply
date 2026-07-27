@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "recruit-edge-e0d1b"
+  },
+  "targets": {
+    "recruit-edge-e0d1b": {
+      "hosting": {
+        "ai-apply-dashboard": [
+          "ai-apply-dashboard"
+        ]
+      }
+    }
+  }
+}
