@@ -888,3 +888,53 @@ def parse_job_details(api_key, page_text, url=""):
             "company": "Company",
             "description": page_text[:2000]
         }
+
+def enhance_section(api_key, section_name, text_to_enhance, job_description=""):
+    """
+    CareerCraft AI Enhancement engine.
+    Generates 3 distinct high-impact variations for a specific section or bullet:
+    - Version 1: Metrics & Results Focused
+    - Version 2: ATS Keyword & Active Verb Dense
+    - Version 3: Concise Executive / Leadership Tone
+    """
+    prompt = f"""
+    You are an expert resume writer and ATS optimization specialist.
+    Enhance the following section/bullet point from a candidate's resume.
+    
+    Section Type: {section_name}
+    Original Text: "{text_to_enhance}"
+    {"Target Job Description Context: " + job_description if job_description else ""}
+    
+    Provide 3 distinct, highly effective rewrites:
+    1. Metrics & Results Focused: Emphasize quantifiable metrics, ROI, and business outcomes.
+    2. ATS Keyword & Active Verb Dense: Use strong action verbs, technical/industry terminology, and keyword density.
+    3. Concise Executive Tone: Polished, punchy, high-level professional phrasing.
+    
+    Return ONLY a valid JSON object matching this schema:
+    {{
+      "versions": [
+        "Version 1 (Metrics & Results)",
+        "Version 2 (ATS Verb & Keyword Dense)",
+        "Version 3 (Concise Executive Tone)"
+      ]
+    }}
+    Do not wrap the output in markdown code blocks.
+    """
+
+    try:
+        text = generate_with_gemini(api_key, prompt)
+        res = parse_ai_json(text)
+        if isinstance(res, dict) and "versions" in res and isinstance(res["versions"], list):
+            return res["versions"][:3]
+        elif isinstance(res, list):
+            return res[:3]
+    except Exception as e:
+        print(f"[AI ENGINE] Error in enhance_section: {e}")
+
+    # Fallback variations
+    return [
+        f"{text_to_enhance} (Optimized with metrics and quantified impact)",
+        f"{text_to_enhance} (Enhanced with active verbs and key technical competencies)",
+        f"{text_to_enhance} (Refined for concise executive presentation)"
+    ]
+

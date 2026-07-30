@@ -3,7 +3,7 @@ from flask_cors import CORS
 import io
 import os
 import requests
-from ai_engine import solve_questions, generate_cover_letter, map_fields_fallback, parse_resume_pdf, evaluate_ats_score, generate_mock_questions, grade_mock_answer, suggest_buddy_answer, generate_career_template, generate_tailored_resume, generate_voice_interview_turn, evaluate_voice_interview
+from ai_engine import solve_questions, generate_cover_letter, map_fields_fallback, parse_resume_pdf, evaluate_ats_score, generate_mock_questions, grade_mock_answer, suggest_buddy_answer, generate_career_template, generate_tailored_resume, generate_voice_interview_turn, evaluate_voice_interview, enhance_section
 from automation_engine import submit_application_headless
 from scraper import scrape_linkedin_jobs, scrape_indeed_jobs
 app = Flask(__name__)
@@ -797,6 +797,27 @@ def api_parse_job_details():
         from ai_engine import parse_job_details
         result = parse_job_details(api_key, page_text, url)
         return jsonify(result), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/enhance-section', methods=['POST'])
+def api_enhance_section():
+    api_key = request.headers.get('X-Gemini-Key') or request.json.get('apiKey')
+    data = request.json or {}
+    section_name = data.get('sectionName', 'summary')
+    text_to_enhance = data.get('textToEnhance', '')
+    job_description = data.get('jobDescription', '')
+
+    if not api_key:
+        return jsonify({"error": "Gemini API Key is missing."}), 400
+    if not text_to_enhance:
+        return jsonify({"error": "No text provided to enhance."}), 400
+
+    try:
+        versions = enhance_section(api_key, section_name, text_to_enhance, job_description)
+        return jsonify({"versions": versions}), 200
     except Exception as e:
         import traceback
         traceback.print_exc()

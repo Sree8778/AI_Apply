@@ -36,6 +36,7 @@ import {
   User as IconUser,
   X as IconX,
   Zap as IconZap,
+  Sparkles as IconSparkles
 } from "lucide-react";
 const LANGUAGE_PROFICIENCY_LEVELS = [
     "Native",
@@ -84,8 +85,17 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
         injectCSS: !1,
         immediatelyRender: !1,
       },
-      [value],
+      [],
     );
+
+    useEffect(() => {
+      if (editor && value !== undefined && !editor.isFocused) {
+        const currentHTML = editor.getHTML();
+        if (currentHTML !== value) {
+          editor.commands.setContent(value || "<p></p>", false);
+        }
+      }
+    }, [value, editor]);
     return !mounted || !editor ? (
       <div className="min-h-[120px] p-3 rounded-md border border-white/20 bg-white/5 text-white placeholder-gray-400">
         {placeholder || "Loading editor..."}
@@ -338,6 +348,17 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
             onChange={(t) => onFieldChange("website", t.target.value)}
           />
         </div>
+        <div className="md:col-span-2">
+          <FieldLabel>{"Header Links Display Format on Resume"}</FieldLabel>
+          <SelectInput
+            value={data.linkDisplayFormat || "clean"}
+            onChange={(t) => onFieldChange("linkDisplayFormat", t.target.value)}
+          >
+            <option value="clean">{"Clean Handle (e.g. linkedin.com/in/username)"}</option>
+            <option value="short">{"Short Label (e.g. LinkedIn | GitHub | Portfolio)"}</option>
+            <option value="full">{"Full URL (e.g. https://linkedin.com/in/username)"}</option>
+          </SelectInput>
+        </div>
       </div>
       <div>
         <FieldLabel>{"Legal Status"}</FieldLabel>
@@ -355,10 +376,22 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
       </div>
     </div>
   ),
-  SummarySection = ({ value: value, onChange: onChange }) => (
+  SummarySection = ({ value: value, onChange: onChange, onEnhance: onEnhance }) => (
     <div className="space-y-4">
       <div>
-        <FieldLabel>{"Professional Summary"}</FieldLabel>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <FieldLabel>{"Professional Summary"}</FieldLabel>
+          {onEnhance && (
+            <button
+              type="button"
+              onClick={() => onEnhance('Summary', value || '', { type: 'summary' })}
+              className="btn btn-secondary"
+              style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', gap: '5px', alignItems: 'center', color: '#a855f7', borderColor: 'rgba(168, 85, 247, 0.3)' }}
+            >
+              <IconSparkles size={12} /> {"✨ Enhance with AI"}
+            </button>
+          )}
+        </div>
         <RichTextEditor
           value={value || ""}
           onChange={onChange}
@@ -375,6 +408,7 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
     onRemove: onRemove,
     fields: fields,
     addPayload: addPayload,
+    onEnhance: onEnhance
   }) => (
     <div className="space-y-4">
       {(data || []).map((c, h) => (
@@ -399,7 +433,19 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
               };
               return d.type === "textarea" ? (
                 <div className={p} key={d.key}>
-                  <FieldLabel>{d.label}</FieldLabel>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <FieldLabel>{d.label}</FieldLabel>
+                    {onEnhance && (
+                      <button
+                        type="button"
+                        onClick={() => onEnhance(`${sectionKey === 'work_history' ? 'Work Experience' : sectionKey === 'projects' ? 'Project' : 'Education'} #${h + 1}`, c[d.key] || '', { type: sectionKey === 'work_history' ? 'work' : sectionKey === 'projects' ? 'project' : 'education', index: h, field: d.key })}
+                        className="btn btn-secondary"
+                        style={{ padding: '2px 8px', fontSize: '11px', display: 'flex', gap: '4px', alignItems: 'center', color: '#a855f7', borderColor: 'rgba(168, 85, 247, 0.3)' }}
+                      >
+                        <IconSparkles size={11} /> {"✨ Enhance"}
+                      </button>
+                    )}
+                  </div>
                   <RichTextEditor
                     value={c[d.key] || ""}
                     onChange={(b) => onChange(sectionKey, h, d.key, b)}
@@ -511,6 +557,7 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
         linkedin: ((p6 = state.personal) == null ? void 0 : p6.linkedin) || "",
         github: ((p7 = state.personal) == null ? void 0 : p7.github) || "",
         website: ((p8 = state.personal) == null ? void 0 : p8.website) || "",
+        linkDisplayFormat: state.personal?.linkDisplayFormat || "clean",
       },
       summary: state.summary || "",
       skills: (state.skills || []).flatMap((d) =>
@@ -586,6 +633,7 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
               ((p7 = resumeData.personal) == null ? void 0 : p7.github) || "",
             website:
               ((p8 = resumeData.personal) == null ? void 0 : p8.website) || "",
+            linkDisplayFormat: resumeData.personal?.linkDisplayFormat || "clean",
           },
           summary: resumeData.summary || "",
           experience: (resumeData.work_history || []).map((d, p) => ({
@@ -628,7 +676,7 @@ const LANGUAGE_PROFICIENCY_LEVELS = [
         }
       : null;
   };
-function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
+function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate, onEnhanceSection: onEnhanceSection }) {
   const [activeSection, setActiveSection] = useState("personal"),
     [formData, setFormData] = useState(() =>
       resumeDataToProfileEditorState(profile),
@@ -704,85 +752,126 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
         [E]: (formData[E] || []).filter((k) => k.id !== S),
       };
       (commitChange(w), toast.error("Removed entry"));
-    },
-    sidebarGroups = [
-      {
-        label: "Content Sections",
-        items: [
-          {
-            id: "personal",
-            name: "Personal",
-            icon: <IconUser size={16} />,
-          },
-          {
-            id: "summary",
-            name: "Summary",
-            icon: <IconFileText size={16} />,
-          },
-          {
-            id: "experience",
-            name: "Experience",
-            icon: <IconBriefcase size={16} />,
-          },
-          {
-            id: "education",
-            name: "Education",
-            icon: <IconGraduationCap size={16} />,
-          },
-          {
-            id: "skills",
-            name: "Skills",
-            icon: <IconAward size={16} />,
-          },
-          {
-            id: "projects",
-            name: "Projects",
-            icon: <IconFolderGit2 size={16} />,
-          },
-          {
-            id: "languages",
-            name: "Languages",
-            icon: <IconGlobe size={16} />,
-          },
-        ],
-      },
+    };
+
+    const DEFAULT_SECTIONS = [
+      { id: "personal", name: "Personal", icon: <IconUser size={15} /> },
+      { id: "summary", name: "Summary", icon: <IconFileText size={15} /> },
+      { id: "experience", name: "Experience", icon: <IconBriefcase size={15} /> },
+      { id: "education", name: "Education", icon: <IconGraduationCap size={15} /> },
+      { id: "skills", name: "Skills", icon: <IconAward size={15} /> },
+      { id: "projects", name: "Projects", icon: <IconFolderGit2 size={15} /> },
+      { id: "languages", name: "Languages", icon: <IconGlobe size={15} /> },
     ];
+    const [sections, setSections] = useState(DEFAULT_SECTIONS);
+
+    const moveSection = (idx, direction) => {
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= sections.length) return;
+      const nextSections = [...sections];
+      const temp = nextSections[idx];
+      nextSections[idx] = nextSections[targetIdx];
+      nextSections[targetIdx] = temp;
+      setSections(nextSections);
+      const nextOrder = nextSections.map((s) => s.id);
+      const updatedData = {
+        ...formData,
+        sectionsOrder: nextOrder,
+        customSectionsList: nextSections
+      };
+      commitChange(updatedData);
+      toast.success(`Reordered section "${temp.name}"`);
+    };
+
+    const handleAddCustomSection = () => {
+      const sectionName = prompt("Enter Custom Section Title (e.g. Certifications, Publications, Volunteering):");
+      if (!sectionName || !sectionName.trim()) return;
+      const cleanName = sectionName.trim();
+      const customId = `custom_${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${Date.now()}`;
+      const newSec = {
+        id: customId,
+        name: cleanName,
+        isCustom: true,
+        icon: <IconSparkles size={15} />
+      };
+      const nextSections = [...sections, newSec];
+      setSections(nextSections);
+      setActiveSection(customId);
+      const nextOrder = nextSections.map((s) => s.id);
+      const updatedData = {
+        ...formData,
+        sectionsOrder: nextOrder,
+        customSectionsList: nextSections
+      };
+      commitChange(updatedData);
+      toast.success(`Added new custom section: "${cleanName}"`);
+    };
+
   return formData ? (
-    <div className="flex flex-col lg:flex-row gap-6 min-h-0">
-      <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
-        {sidebarGroups.map((E, S) => (
-          <div className="glass-panel p-4 space-y-2" key={S}>
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-2 mb-2">
-              {E.label}
-            </h4>
-            <div className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
-              {E.items.map((w) => {
-                const k = activeSection === w.id;
-                return (
+    <div className="flex flex-col gap-4 min-h-0 w-full">
+      {/* Horizontal Top Section Navigation Bar */}
+      <div className="glass-panel p-3">
+        <div className="flex justify-between items-center mb-2 px-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            {"CONTENT SECTIONS (Reorder with ◀ ▶)"}
+          </div>
+          <button
+            type="button"
+            onClick={handleAddCustomSection}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold text-purple-300 border border-purple-500/30 hover:bg-purple-500/10 transition-colors"
+          >
+            <IconPlus size={13} />
+            <span>{"+ Add Custom Section"}</span>
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {sections.map((w, sIdx) => {
+            const k = activeSection === w.id;
+            return (
+              <div key={w.id} className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(w.id)}
+                  style={{
+                    background: k
+                      ? "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)"
+                      : "rgba(255,255,255,0.03)",
+                    borderColor: k
+                      ? "#c084fc"
+                      : "rgba(255,255,255,0.08)",
+                    boxShadow: k ? "0 4px 14px rgba(168, 85, 247, 0.3)" : "none"
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white border hover:bg-white/[0.08] transition-all whitespace-nowrap"
+                >
+                  {w.icon}
+                  <span>{w.name}</span>
+                </button>
+                <div className="flex flex-col opacity-60 hover:opacity-100 transition-opacity">
                   <button
                     type="button"
-                    onClick={() => setActiveSection(w.id)}
-                    style={{
-                      background: k
-                        ? "var(--primary)"
-                        : "rgba(255,255,255,0.02)",
-                      borderColor: k
-                        ? "var(--primary)"
-                        : "rgba(255,255,255,0.05)",
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-white border hover:bg-white/[0.05] transition-all whitespace-nowrap lg:w-full"
-                    key={w.id}
+                    disabled={sIdx === 0}
+                    onClick={() => moveSection(sIdx, -1)}
+                    className="text-[10px] text-zinc-400 hover:text-white px-1 py-0 disabled:opacity-20"
+                    title="Move Left"
                   >
-                    {w.icon}
-                    <span>{w.name}</span>
+                    {"◀"}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+                  <button
+                    type="button"
+                    disabled={sIdx === sections.length - 1}
+                    onClick={() => moveSection(sIdx, 1)}
+                    className="text-[10px] text-zinc-400 hover:text-white px-1 py-0 disabled:opacity-20"
+                    title="Move Right"
+                  >
+                    {"▶"}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="flex-1 glass-panel p-6 overflow-y-auto max-h-[80vh]">
+      <div className="w-full glass-panel p-6 overflow-y-auto max-h-[80vh]">
         {activeSection === "personal" && (
           <PersonalInfoSection
             data={formData.personal}
@@ -790,7 +879,7 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
           />
         )}
         {activeSection === "summary" && (
-          <SummarySection value={formData.summary} onChange={updateSummary} />
+          <SummarySection value={formData.summary} onChange={updateSummary} onEnhance={onEnhanceSection} />
         )}
         {activeSection === "experience" && (
           <DynamicListSection
@@ -799,6 +888,7 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
             onChange={updateListItemField}
             onAdd={addListItem}
             onRemove={removeListItem}
+            onEnhance={onEnhanceSection}
             addPayload={{
               jobTitle: "",
               company: "",
@@ -834,6 +924,7 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
             onChange={updateListItemField}
             onAdd={addListItem}
             onRemove={removeListItem}
+            onEnhance={onEnhanceSection}
             addPayload={{
               degree: "",
               institution: "",
@@ -887,6 +978,7 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
             onChange={updateListItemField}
             onAdd={addListItem}
             onRemove={removeListItem}
+            onEnhance={onEnhanceSection}
             addPayload={{
               title: "",
               date: "",
@@ -916,6 +1008,42 @@ function ProfileEditor({ profile: profile, onProfileUpdate: onProfileUpdate }) {
             onChange={updateListItemField}
             onAdd={addListItem}
             onRemove={removeListItem}
+          />
+        )}
+        {activeSection.startsWith("custom_") && (
+          <DynamicListSection
+            sectionKey={activeSection}
+            data={formData[activeSection] || []}
+            onChange={updateListItemField}
+            onAdd={addListItem}
+            onRemove={removeListItem}
+            onEnhance={onEnhanceSection}
+            addPayload={{
+              title: "",
+              subtitle: "",
+              dates: "",
+              description: "<p></p>",
+            }}
+            fields={[
+              {
+                key: "title",
+                label: "Title / Name",
+              },
+              {
+                key: "subtitle",
+                label: "Organization / Subtitle",
+              },
+              {
+                key: "dates",
+                label: "Dates / Year",
+              },
+              {
+                key: "description",
+                label: "Description / Highlights",
+                type: "textarea",
+                colSpan: 2,
+              },
+            ]}
           />
         )}
       </div>
