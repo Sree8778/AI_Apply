@@ -666,11 +666,15 @@ def generate_latex_resume(api_key, resume_data, job_description, latex_template)
     2. Maintain all formatting, spacing, styling, and structural elements of the Master LaTeX Template. Substitute ONLY the contents inside placeholders (Professional Summary, Technical Skills list, Work Experience items, Projects, Certifications).
     3. Ensure the content fits on exactly 2 pages when compiled.
     4. Provide the exact same tailored content (achievements, projects, summary, skills) that you generated for the LaTeX code inside a structured JSON property "tailoredResumeData" matching the candidate profile schema. Ensure the fields are fully populated so the UI can preview it.
-    5. Return ONLY a valid JSON object matching this schema:
+    5. CRITICAL for diffing: "tailoredResumeData.work_history" and "tailoredResumeData.projects" MUST contain exactly the same entries, in exactly the same order, as the Candidate Profile (same companies, roles, durations, project names). Only rewrite the achievement bullet texts within each entry. Do not add, remove, or reorder entries.
+    6. Extract the 10 to 25 most critical hard-skill keywords from the Job Description (technologies, tools, methodologies, certifications — not soft skills) into "jdKeywords".
+    7. Return ONLY a valid JSON object matching this schema:
     {{
       "latex": "... fully substituted compile-ready LaTeX code ...",
       "atsScore": 95,
+      "jdKeywords": ["Keyword1", "Keyword2"],
       "tailoredResumeData": {{
+        "summary": "... tailored professional summary ...",
         "personal": {{
           "name": "...",
           "phone": "...",

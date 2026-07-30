@@ -507,149 +507,174 @@ const AtsOptimizerPanel = ({
   setShowRawLatexPane
 }) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* ATS Scorer Card */}
-      <div className="glass-panel p-5 space-y-4">
-        <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-2">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Sparkles size={16} className="text-indigo-400" /> ATS Match Score Scorer
-          </h3>
-          <button 
-            type="button"
-            onClick={runAtsScoring} 
-            className="btn btn-primary text-xs py-1.5 px-3" 
-            disabled={scoring}
-          >
-            {scoring ? 'Scoring...' : 'Analyze Match'}
-          </button>
-        </div>
-
-        <div className="form-group">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1 block">Target Job Description</label>
-          <textarea
-            className="flex min-h-[140px] w-full rounded-md border border-white/10 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/60 transition-colors"
-            style={{ background: 'rgba(15,23,42,0.4)' }}
-            placeholder="Paste the target job description details here..."
-            value={jobDescription || ''}
-            onChange={(e) => setJobDescription(e.target.value)}
-          />
-        </div>
-
-        {atsScoreData ? (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-4">
-              <div 
-                style={{ 
-                  width: '64px', 
-                  height: '64px', 
-                  borderRadius: '50%', 
-                  background: 'rgba(255,255,255,0.02)', 
-                  border: `3px solid ${atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)'}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  fontWeight: '800',
-                  color: atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)'
-                }}
-              >
-                {atsScoreData.score}%
-              </div>
-              <div>
-                <div className="text-xs text-zinc-400">Match Grade</div>
-                <div 
-                  className="text-sm font-bold" 
-                  style={{ color: atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)' }}
-                >
-                  {atsScoreData.score >= 80 ? 'ATS Compatible' : atsScoreData.score >= 60 ? 'Needs Keyword Adjustments' : 'High Risk Rejection'}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Missing Keywords</h4>
-              {atsScoreData.missingKeywords && atsScoreData.missingKeywords.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {atsScoreData.missingKeywords.map((kw, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
-                      {kw}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs text-green-400">✔ Zero missing keywords!</div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-6 text-zinc-500 text-xs">
-            Paste a Job Description and click "Analyze Match" to test score.
-          </div>
-        )}
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-base font-bold text-white">ATS Match & LaTeX Export</h2>
+        <p className="text-xs text-zinc-400 mt-1">
+          Paste (or confirm) the target job description, then analyze your match score and export a
+          tailored resume — the live preview on the right stays visible the whole time.
+        </p>
       </div>
 
-      {/* LaTeX Compiler Card */}
-      <div className="glass-panel p-5 space-y-4">
-        <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-2">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Sparkles size={16} className="text-indigo-400" /> LaTeX Compile Studio
-          </h3>
-        </div>
-        <p className="text-xs text-zinc-400 leading-relaxed">
-          Injects tailored achievements, keywords, and headers into a professional LaTeX resume template and compiles it.
-        </p>
+      {/* Unified two-step flow: Step 1 diagnoses the gap, Step 2 fixes it.
+          Kept as a single card (rather than two side-by-side cards with
+          equal visual weight) so the sequence - and the fact that Step 2
+          acts on what Step 1 finds - is obvious rather than looking like
+          two competing "fix my ATS score" buttons. */}
+      <div className="glass-panel p-5 space-y-6">
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={generateLatexResumeSubmit}
-            className="flex-1 btn btn-primary text-xs py-2"
-            disabled={generatingLatex}
-          >
-            {generatingLatex ? 'Tailoring LaTeX...' : 'Generate LaTeX Resume'}
-          </button>
-          {generatedLatexResume && (
+        {/* Step 1: Diagnose */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold flex-shrink-0">1</div>
+            <h3 className="text-sm font-bold text-white">Check Your Match Score</h3>
+          </div>
+
+          <div className="form-group pl-[34px]">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1 block">Target Job Description</label>
+            <textarea
+              className="flex min-h-[140px] w-full rounded-md border border-white/10 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/60 transition-colors"
+              style={{ background: 'rgba(15,23,42,0.4)' }}
+              placeholder="Paste the target job description details here..."
+              value={jobDescription || ''}
+              onChange={(e) => setJobDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="pl-[34px]">
             <button
               type="button"
-              onClick={() => setShowRawLatexPane(!showRawLatexPane)}
-              className="btn btn-secondary text-xs px-3"
+              onClick={runAtsScoring}
+              className="w-full btn btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
+              disabled={scoring}
             >
-              {showRawLatexPane ? 'Hide Code' : 'View Code'}
+              <Sparkles size={14} />
+              {scoring ? 'Analyzing Match...' : 'Analyze Match'}
             </button>
+          </div>
+
+          {atsScoreData ? (
+            <div className="space-y-4 pl-[34px]">
+              <div className="flex items-center gap-4">
+                <div
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: `3px solid ${atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    fontWeight: '800',
+                    color: atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)'
+                  }}
+                >
+                  {atsScoreData.score}%
+                </div>
+                <div>
+                  <div className="text-xs text-zinc-400">Match Grade</div>
+                  <div
+                    className="text-sm font-bold"
+                    style={{ color: atsScoreData.score >= 80 ? 'var(--success)' : atsScoreData.score >= 60 ? 'var(--warning)' : 'var(--error)' }}
+                  >
+                    {atsScoreData.score >= 80 ? 'ATS Compatible' : atsScoreData.score >= 60 ? 'Needs Keyword Adjustments' : 'High Risk Rejection'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Missing Keywords</h4>
+                {atsScoreData.missingKeywords && atsScoreData.missingKeywords.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {atsScoreData.missingKeywords.map((kw, i) => (
+                      <span key={i} className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-green-400">✔ Zero missing keywords!</div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-zinc-500 pl-[34px]">
+              Paste a job description and click "Analyze Match" to see your score.
+            </div>
           )}
         </div>
 
-        {generatedLatexResume && (
-          <div className="space-y-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                const element = document.createElement("a");
-                const file = new Blob([generatedLatexResume], { type: 'text/plain' });
-                element.href = URL.createObjectURL(file);
-                element.download = `resume_tailored.tex`;
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-              }}
-              className="w-full btn btn-secondary text-xs py-2 flex items-center justify-center gap-2"
-            >
-              <Download size={14} /> Download LaTeX (.tex)
-            </button>
+        <div className="border-t border-white/10" />
 
-            {showRawLatexPane && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">LaTeX Source Code</label>
-                <textarea
-                  readOnly
-                  className="w-full min-h-[160px] rounded-md border border-white/10 p-3 text-xs text-indigo-200 font-mono focus:outline-none"
-                  style={{ background: 'rgba(0,0,0,0.3)' }}
-                  value={generatedLatexResume}
-                />
+        {/* Step 2: Fix - acts on whatever Step 1 just found */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold flex-shrink-0">2</div>
+            <h3 className="text-sm font-bold text-white">Generate a Tailored Resume</h3>
+          </div>
+
+          <p className="text-xs text-zinc-400 leading-relaxed pl-[34px]">
+            {atsScoreData && atsScoreData.missingKeywords && atsScoreData.missingKeywords.length > 0
+              ? `Rewrites your achievements and headers to work in the ${atsScoreData.missingKeywords.length} missing keyword${atsScoreData.missingKeywords.length === 1 ? '' : 's'} found above, then compiles a professional LaTeX resume.`
+              : 'Injects tailored achievements, keywords, and headers into a professional LaTeX resume template and compiles it.'}
+          </p>
+
+          <div className="pl-[34px] space-y-3">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={generateLatexResumeSubmit}
+                className="flex-1 btn btn-primary text-sm py-2.5"
+                disabled={generatingLatex}
+              >
+                {generatingLatex ? 'Tailoring LaTeX...' : 'Generate Tailored Resume'}
+              </button>
+              {generatedLatexResume && (
+                <button
+                  type="button"
+                  onClick={() => setShowRawLatexPane(!showRawLatexPane)}
+                  className="btn btn-secondary text-xs px-3"
+                >
+                  {showRawLatexPane ? 'Hide Code' : 'View Code'}
+                </button>
+              )}
+            </div>
+
+            {generatedLatexResume && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const element = document.createElement("a");
+                    const file = new Blob([generatedLatexResume], { type: 'text/plain' });
+                    element.href = URL.createObjectURL(file);
+                    element.download = `resume_tailored.tex`;
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                  }}
+                  className="w-full btn btn-secondary text-xs py-2 flex items-center justify-center gap-2"
+                >
+                  <Download size={14} /> Download LaTeX (.tex)
+                </button>
+
+                {showRawLatexPane && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">LaTeX Source Code</label>
+                    <textarea
+                      readOnly
+                      className="w-full min-h-[160px] rounded-md border border-white/10 p-3 text-xs text-indigo-200 font-mono focus:outline-none"
+                      style={{ background: 'rgba(0,0,0,0.3)' }}
+                      value={generatedLatexResume}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -1811,8 +1836,10 @@ export default function ResumeBuilder({
           )}
         </div>
 
-        {/* Visual Resume Preview Area */}
-        {activeSection !== 'ats_optimizer' && activeSection !== 'latex_code' && (
+        {/* Visual Resume Preview Area - stays visible for every section except
+            the full-width LaTeX Code View, including ATS Match & LaTeX, so
+            Analyze Match and Download are never on mutually-exclusive screens. */}
+        {activeSection !== 'latex_code' && (
           <div className="hidden lg:block w-full xl:w-[480px] flex-shrink-0">
             <div className="glass-panel p-4 flex flex-col h-[85vh]">
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 flex-shrink-0">
