@@ -35,7 +35,7 @@ export default function RecruiterWorkspace({ apiKey }) {
   const [newSkillInput, setNewSkillInput] = useState("");
   const [minExperience, setMinExperience] = useState("3+ Yrs");
   const [location, setLocation] = useState("San Francisco, CA");
-  const [sourcingChannel, setSourcingChannel] = useState("github");
+  const [sourcingChannel, setSourcingChannel] = useState("all");
 
   // Results & Sourcing State
   const [isSearching, setIsSearching] = useState(false);
@@ -348,24 +348,48 @@ export default function RecruiterWorkspace({ apiKey }) {
 
         {/* Sourcing Channel & Action Button */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid var(--border-color)", flexWrap: "wrap", gap: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "600" }}>Sourcing Channel:</span>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setSourcingChannel("all")}
+                className={`btn ${sourcingChannel === "all" ? "btn-primary" : "btn-secondary"}`}
+                style={{ padding: "5px 11px", fontSize: "11.5px", display: "flex", gap: "5px", alignItems: "center" }}
+              >
+                <IconSparkles size={13} /> All Sources (Hybrid)
+              </button>
               <button
                 type="button"
                 onClick={() => setSourcingChannel("github")}
                 className={`btn ${sourcingChannel === "github" ? "btn-primary" : "btn-secondary"}`}
-                style={{ padding: "5px 12px", fontSize: "11.5px", display: "flex", gap: "6px", alignItems: "center" }}
+                style={{ padding: "5px 11px", fontSize: "11.5px", display: "flex", gap: "5px", alignItems: "center" }}
               >
-                <IconGithub size={13} /> GitHub Developers
+                <IconGithub size={13} /> GitHub
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourcingChannel("linkedin")}
+                className={`btn ${sourcingChannel === "linkedin" ? "btn-primary" : "btn-secondary"}`}
+                style={{ padding: "5px 11px", fontSize: "11.5px", display: "flex", gap: "5px", alignItems: "center" }}
+              >
+                💼 LinkedIn
+              </button>
+              <button
+                type="button"
+                onClick={() => setSourcingChannel("indeed")}
+                className={`btn ${sourcingChannel === "indeed" ? "btn-primary" : "btn-secondary"}`}
+                style={{ padding: "5px 11px", fontSize: "11.5px", display: "flex", gap: "5px", alignItems: "center" }}
+              >
+                📋 Indeed
               </button>
               <button
                 type="button"
                 onClick={() => setSourcingChannel("web")}
                 className={`btn ${sourcingChannel === "web" ? "btn-primary" : "btn-secondary"}`}
-                style={{ padding: "5px 12px", fontSize: "11.5px", display: "flex", gap: "6px", alignItems: "center" }}
+                style={{ padding: "5px 11px", fontSize: "11.5px", display: "flex", gap: "5px", alignItems: "center" }}
               >
-                <IconGlobe size={13} /> Web X-Ray Search
+                <IconGlobe size={13} /> Portfolios
               </button>
             </div>
           </div>
@@ -426,9 +450,14 @@ export default function RecruiterWorkspace({ apiKey }) {
                           style={{ width: "46px", height: "46px", borderRadius: "50%", background: "#1e293b", objectFit: "cover", border: "2px solid rgba(255,255,255,0.1)" }}
                         />
                         <div>
-                          <h4 style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "white" }}>
-                            {cand.name}
-                          </h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <h4 style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "white" }}>
+                              {cand.name}
+                            </h4>
+                            <span style={{ fontSize: "10px", background: "rgba(255,255,255,0.06)", color: "#cbd5e1", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "1px 8px", fontWeight: "600" }}>
+                              {cand.sourceBadge || "🐙 GitHub"}
+                            </span>
+                          </div>
                           <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                             {cand.title}
                           </div>
