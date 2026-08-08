@@ -823,6 +823,62 @@ def api_enhance_section():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+from recruiter_sourcing import source_candidates_headless
+
+@app.route('/api/recruiter/search-candidates', methods=['POST'])
+def api_recruiter_search_candidates():
+    data = request.json or {}
+    role = data.get('role', 'Fullstack Engineer')
+    skills = data.get('skills', ['React', 'Python', 'AWS'])
+    min_exp = data.get('minExp', '3+')
+    location = data.get('location', 'San Francisco')
+    platform = data.get('platform', 'github')
+
+    try:
+        candidates = source_candidates_headless(role, skills, min_exp, location, platform)
+        return jsonify({"candidates": candidates}), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/recruiter/generate-outreach', methods=['POST'])
+def api_recruiter_generate_outreach():
+    api_key = request.headers.get('X-Gemini-Key') or request.json.get('apiKey')
+    data = request.json or {}
+    candidate = data.get('candidate', {})
+    role = data.get('role', 'Software Engineer')
+    company_name = data.get('companyName', 'Our Engineering Team')
+
+    cand_name = candidate.get('name', 'Candidate')
+    cand_title = candidate.get('title', 'Engineer')
+    cand_skills = ', '.join(candidate.get('skills', ['Software Development']))
+
+    if api_key:
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            prompt = f"Write a professional, personalized recruiter outreach email/LinkedIn message to candidate {cand_name} for the role of {role} at {company_name}. Candidate background: {cand_title}, skilled in {cand_skills}. Keep it concise, engaging, and professional."
+            res = model.generate_content(prompt)
+            outreach_text = res.text.strip()
+            return jsonify({"outreachMessage": outreach_text}), 200
+        except Exception as e:
+            print(f"[Outreach Generator] Gemini API error: {e}")
+
+    # Fallback template if no API key
+    fallback_msg = f"Hi {cand_name},
+
+I was really impressed by your background as a {cand_title} and your expertise in {cand_skills}.
+
+We are currently scaling our engineering team at {company_name} and are looking for a {role} to lead key technical initiatives. Based on your experience, I think you'd be a fantastic fit.
+
+Would you be open for a quick 15-minute introductory call this week?
+
+Best regards,
+Recruiting Team @ {company_name}"
+    return jsonify({"outreachMessage": fallback_msg}), 200
+
 if __name__ == '__main__':
     # Local dev only. In Cloud Run, gunicorn imports `app` directly (see Dockerfile)
     # and debug mode / the Flask dev server are never used.

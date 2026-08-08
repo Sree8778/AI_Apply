@@ -3114,6 +3114,13 @@ function App() {
               />
               {"Tailoring Workspace"}
             </button>
+            <button
+              className={`nav-item ${activeTab === "recruiter" ? "active" : ""}`}
+              onClick={() => setActiveTab("recruiter")}
+            >
+              <IconUserCheck size={18} style={{ color: "#a855f7" }} />
+              {"Recruiter Workspace"}
+            </button>
             <div
               style={{
                 padding: "16px 12px 6px 12px",
@@ -5092,7 +5099,8 @@ function App() {
             )}
           </div>
         )}
-{activeTab === "career-templates" && (
+{activeTab === "recruiter" && <RecruiterWorkspace apiKey={apiKey} />}
+        {activeTab === "career-templates" && (
           <div>
             <div className="page-header">
               <div>
