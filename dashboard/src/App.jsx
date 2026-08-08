@@ -46,6 +46,7 @@ import {
   Terminal as IconTerminal,
   Trash2 as IconTrash2,
   User as IconUser,
+  UserCheck as IconUserCheck,
   Zap as IconZap,
 } from "lucide-react";
 import {
@@ -56,6 +57,7 @@ import {
 } from "./firebase.js";
 import AuthPage from "./components/AuthPage.jsx";
 import ProfileEditor from "./components/ProfileEditor.jsx";
+import RecruiterWorkspace from "./components/RecruiterWorkspace.jsx";
 import EnhancementModal from "./components/EnhancementModal.jsx";
 const API_BASE_URL =
     "https://ai-apply-backend-414523842687.us-central1.run.app",
