@@ -866,6 +866,15 @@ def api_recruiter_generate_outreach():
         except Exception as e:
             print(f"[Outreach Generator] Gemini API error: {e}")
 
+    # Check Hugging Face API
+    hf_key = request.headers.get('X-HuggingFace-Key') or data.get('hfApiKey') or os.environ.get('HUGGINGFACE_API_KEY')
+    if hf_key:
+        try:
+            hf_outreach = huggingface_engine.hf_generate_outreach(hf_key, cand_name, cand_title, cand_skills, role, company_name)
+            return jsonify({"outreachMessage": hf_outreach}), 200
+        except Exception as e:
+            print(f"[Outreach Generator] Hugging Face error: {e}")
+
     # Fallback template if no API key
     fallback_msg = f"""Hi {cand_name},
 
@@ -878,6 +887,19 @@ Would you be open for a quick 15-minute introductory call this week?
 Best regards,
 Recruiting Team @ {company_name}"""
     return jsonify({"outreachMessage": fallback_msg}), 200
+
+@app.route('/api/huggingface/test-connection', methods=['POST'])
+def test_huggingface_connection():
+    data = request.get_json() or {}
+    hf_key = request.headers.get('X-HuggingFace-Key') or data.get('hfApiKey') or os.environ.get('HUGGINGFACE_API_KEY')
+    if not hf_key:
+        return jsonify({"success": False, "error": "Hugging Face API token missing"}), 400
+
+    try:
+        res = huggingface_engine.generate_with_huggingface(hf_key, "Say hello!")
+        return jsonify({"success": True, "message": "Hugging Face API connected successfully!", "response": res}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     # Local dev only. In Cloud Run, gunicorn imports `app` directly (see Dockerfile)

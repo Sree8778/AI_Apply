@@ -716,7 +716,11 @@ function App() {
     (document.documentElement.setAttribute("data-theme", theme),
       localStorage.setItem("ai_apply_theme", theme));
   }, [theme]);
-  const [apiKey, setApiKey] = useState(
+    const [hfApiKey, setHfApiKey] = useState(() => localStorage.getItem("ai_apply_hf_api_key") || "");
+  const [aiProvider, setAiProvider] = useState(() => localStorage.getItem("ai_apply_ai_provider") || "gemini");
+  const [verifyingHfKey, setVerifyingHfKey] = useState(false);
+  const [hfKeyVerified, setHfKeyVerified] = useState(false);
+const [apiKey, setApiKey] = useState(
       () => localStorage.getItem("ai_apply_api_key") || "",
     ),
     [apiKeyVerified, setApiKeyVerified] = useState(!1),
@@ -6293,7 +6297,56 @@ function App() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">{"Gemini API Key"}</label>
+                              {/* AI Model Provider Selector */}
+              <div className="form-group" style={{ marginBottom: "24px" }}>
+                <label className="form-label">{"Active AI Intelligence Engine"}</label>
+                <select
+                  className="form-control"
+                  value={aiProvider}
+                  onChange={(e) => {
+                    setAiProvider(e.target.value);
+                    localStorage.setItem("ai_apply_ai_provider", e.target.value);
+                    toast.success(`Active AI Provider set to ${e.target.value === 'huggingface' ? 'Hugging Face Inference API' : 'Google Gemini API'}`);
+                  }}
+                >
+                  <option value="gemini">✨ Google Gemini 2.5/3.5 Flash API</option>
+                  <option value="huggingface">🤗 Hugging Face Serverless API (Llama 3.2 & Mistral 7B)</option>
+                  <option value="hybrid">⚡ Hybrid Auto-Fallback (Gemini + Hugging Face)</option>
+                </select>
+              </div>
+
+              {/* Hugging Face API Token Input */}
+              <div className="form-group" style={{ marginBottom: "24px" }}>
+                <label className="form-label">{"Hugging Face API Token (HF Token)"}</label>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="Enter your Hugging Face User Access Token (hf_...)"
+                    value={hfApiKey}
+                    onChange={(e) => {
+                      setHfApiKey(e.target.value);
+                      localStorage.setItem("ai_apply_hf_api_key", e.target.value);
+                      setHfKeyVerified(false);
+                    }}
+                  />
+                  <button
+                    onClick={handleVerifyHfApiKey}
+                    className="btn btn-secondary"
+                    disabled={!hfApiKey || verifyingHfKey}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    {verifyingHfKey ? "Verifying Token..." : "Verify HF Token"}
+                  </button>
+                </div>
+                {hfKeyVerified && (
+                  <div style={{ color: "var(--success)", fontSize: "12px", marginTop: "6px", fontWeight: 500 }}>
+                    {"✔ Hugging Face API Token is valid and ready for Llama 3 & Mistral inference!"}
+                  </div>
+                )}
+              </div>
+
+              <label className="form-label">{"Gemini API Key"}</label>
                 <div
                   style={{
                     display: "flex",
