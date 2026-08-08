@@ -36,6 +36,7 @@ export default function RecruiterWorkspace({ apiKey }) {
   const [minExperience, setMinExperience] = useState("3+ Yrs");
   const [location, setLocation] = useState("San Francisco, CA");
   const [sourcingChannel, setSourcingChannel] = useState("all");
+  const [candidateLimit, setCandidateLimit] = useState(24);
 
   // Results & Sourcing State
   const [isSearching, setIsSearching] = useState(false);
@@ -96,7 +97,8 @@ export default function RecruiterWorkspace({ apiKey }) {
               skills: skills,
               minExp: minExperience,
               location: location,
-              platform: sourcingChannel
+              platform: sourcingChannel,
+          limit: candidateLimit
             })
           });
           if (res.ok) {
@@ -301,6 +303,20 @@ export default function RecruiterWorkspace({ apiKey }) {
               onChange={(e) => setLocation(e.target.value)}
             />
           </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "16px", alignItems: "center", paddingTop: "8px" }}>
+          <label className="form-label" style={{ fontSize: "12px", fontWeight: "600", margin: 0 }}>Max Candidates to Scrape:</label>
+          <select
+            className="form-control"
+            style={{ width: "auto", fontSize: "12.5px", padding: "4px 12px" }}
+            value={candidateLimit}
+            onChange={(e) => setCandidateLimit(Number(e.target.value))}
+          >
+            <option value={12}>12 Candidates</option>
+            <option value={24}>24 Candidates (Recommended)</option>
+            <option value={36}>36 Candidates (Deep Search)</option>
+          </select>
         </div>
 
         {/* Required Skills Tag Editor */}
