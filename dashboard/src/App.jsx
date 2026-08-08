@@ -6243,16 +6243,11 @@ const [apiKey, setApiKey] = useState(
               <div>
                 <h1 className="page-title">{"AI Settings (BYOK)"}</h1>
                 <div className="page-subtitle">
-                  {"Manage Gemini API keys for local question answering"}
+                  {"Manage Gemini & Hugging Face API keys for intelligent ATS scoring & resume tailoring"}
                 </div>
               </div>
             </div>
-            <div
-              className="glass-panel"
-              style={{
-                padding: "32px",
-              }}
-            >
+            <div className="glass-panel" style={{ padding: "32px" }}>
               <div
                 style={{
                   display: "flex",
@@ -6265,39 +6260,18 @@ const [apiKey, setApiKey] = useState(
                   marginBottom: "24px",
                 }}
               >
-                <IconLock
-                  style={{
-                    color: "var(--primary)",
-                    flexShrink: 0,
-                    marginTop: "2px",
-                  }}
-                />
+                <IconLock style={{ color: "var(--primary)", flexShrink: 0, marginTop: "2px" }} />
                 <div>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      color: "var(--text-main)",
-                    }}
-                  >
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-main)" }}>
                     {"Bring Your Own Key (BYOK)"}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      color: "var(--text-muted)",
-                      marginTop: "4px",
-                      lineHeight: "1.4",
-                    }}
-                  >
-                    {
-                      "Your API keys are stored purely in your browser's local storage and are never sent to external servers other than directly to the Gemini API during query resolutions."
-                    }
+                  <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px", lineHeight: "1.4" }}>
+                    {"Your API keys are stored purely in your browser's local storage and are never sent to external servers other than directly to the AI APIs during query resolutions."}
                   </div>
                 </div>
               </div>
-              <div className="form-group">
-                              {/* AI Model Provider Selector */}
+
+              {/* AI Model Provider Selector */}
               <div className="form-group" style={{ marginBottom: "24px" }}>
                 <label className="form-label">{"Active AI Intelligence Engine"}</label>
                 <select
@@ -6346,45 +6320,32 @@ const [apiKey, setApiKey] = useState(
                 )}
               </div>
 
-              <label className="form-label">{"Gemini API Key"}</label>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                  }}
-                >
+              {/* Gemini API Key Input */}
+              <div className="form-group" style={{ marginBottom: "24px" }}>
+                <label className="form-label">{"Gemini API Key"}</label>
+                <div style={{ display: "flex", gap: "12px" }}>
                   <input
                     type="password"
                     className="form-control"
                     placeholder="Enter your Gemini API key (AIzaSy...)"
                     value={apiKey}
                     onChange={(D) => {
-                      (setApiKey(D.target.value), setApiKeyVerified(!1));
+                      setApiKey(D.target.value);
+                      setApiKeyVerified(false);
                     }}
                   />
                   <button
                     onClick={handleVerifyApiKey}
                     className="btn btn-secondary"
                     disabled={!apiKey || verifyingApiKey}
-                    style={{
-                      whiteSpace: "nowrap",
-                    }}
+                    style={{ whiteSpace: "nowrap" }}
                   >
                     {verifyingApiKey ? "Verifying..." : "Verify Connection"}
                   </button>
                 </div>
                 {apiKeyVerified && (
-                  <div
-                    style={{
-                      color: "var(--success)",
-                      fontSize: "12px",
-                      marginTop: "6px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {
-                      "✔ API Key is valid and successfully connected to the Gemini API!"
-                    }
+                  <div style={{ color: "var(--success)", fontSize: "12px", marginTop: "6px", fontWeight: 500 }}>
+                    {"✔ API Key is valid and successfully connected to the Gemini API!"}
                   </div>
                 )}
               </div>
