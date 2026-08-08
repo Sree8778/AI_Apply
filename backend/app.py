@@ -867,7 +867,7 @@ def api_recruiter_generate_outreach():
             print(f"[Outreach Generator] Gemini API error: {e}")
 
     # Fallback template if no API key
-    fallback_msg = f"Hi {cand_name},
+    fallback_msg = f"""Hi {cand_name},
 
 I was really impressed by your background as a {cand_title} and your expertise in {cand_skills}.
 
@@ -876,7 +876,7 @@ We are currently scaling our engineering team at {company_name} and are looking 
 Would you be open for a quick 15-minute introductory call this week?
 
 Best regards,
-Recruiting Team @ {company_name}"
+Recruiting Team @ {company_name}"""
     return jsonify({"outreachMessage": fallback_msg}), 200
 
 if __name__ == '__main__':
