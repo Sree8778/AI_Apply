@@ -705,38 +705,30 @@ ${latexSections.join("\n\n")}
 
 function App() {
   var Y, Z, xe, Je, Qt, _t, zt, Pr, Si, Wr, Yr, Qs, La;
-  const [view, setView] = useState("landing"),
-    [activeTab, setActiveTab] = useState("overview"),
-    [showSyncToast, setShowSyncToast] = useState(!1),
-    [copied, setCopied] = useState(!1),
-    [theme, setTheme] = useState(
-      () => localStorage.getItem("ai_apply_theme") || "dark",
-    );
+  const [view, setView] = useState("landing");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showSyncToast, setShowSyncToast] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("ai_apply_theme") || "dark");
+
   useEffect(() => {
-    (document.documentElement.setAttribute("data-theme", theme),
-      localStorage.setItem("ai_apply_theme", theme));
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("ai_apply_theme", theme);
   }, [theme]);
-    const [hfApiKey, setHfApiKey] = useState(() => localStorage.getItem("ai_apply_hf_api_key") || "");
+
+  const [hfApiKey, setHfApiKey] = useState(() => localStorage.getItem("ai_apply_hf_api_key") || "");
   const [aiProvider, setAiProvider] = useState(() => localStorage.getItem("ai_apply_ai_provider") || "gemini");
   const [verifyingHfKey, setVerifyingHfKey] = useState(false);
   const [hfKeyVerified, setHfKeyVerified] = useState(false);
-const [apiKey, setApiKey] = useState(
-      () => localStorage.getItem("ai_apply_api_key") || "",
-    ),
-    [apiKeyVerified, setApiKeyVerified] = useState(!1),
-    [verifyingApiKey, setVerifyingApiKey] = useState(!1),
-    [firebaseConfig, setFirebaseConfig] = useState(
-      () => localStorage.getItem("ai_apply_firebase_config") || "",
-    ),
-    [cloudSyncing, setCloudSyncing] = useState(!1),
-    [automationMode, setAutomationMode] = useState(
-      () => localStorage.getItem("ai_apply_app_mode") || "hybrid",
-    ),
-    [user, setUser] = useState(null),
-    [authLoading, setAuthLoading] = useState(!0),
-    [skipAuth, setSkipAuth] = useState(
-      () => localStorage.getItem("ai_apply_skip_auth") === "true",
-    );
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("ai_apply_api_key") || "");
+  const [apiKeyVerified, setApiKeyVerified] = useState(false);
+  const [verifyingApiKey, setVerifyingApiKey] = useState(false);
+  const [firebaseConfig, setFirebaseConfig] = useState(() => localStorage.getItem("ai_apply_firebase_config") || "");
+  const [cloudSyncing, setCloudSyncing] = useState(false);
+  const [automationMode, setAutomationMode] = useState(() => localStorage.getItem("ai_apply_app_mode") || "hybrid");
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [skipAuth, setSkipAuth] = useState(() => localStorage.getItem("ai_apply_skip_auth") === "true");
 
   // TAILORING WORKSPACE MODE STATE
   const [tailoringWorkspaceMode, setTailoringWorkspaceMode] = useState("select"); // "select" | "fresh" | "jd"
