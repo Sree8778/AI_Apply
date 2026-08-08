@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import {
+  ExternalLink as IconExternalLink,
   Search as IconSearch,
   Sparkles as IconSparkles,
   UserCheck as IconUserCheck,
@@ -431,8 +432,26 @@ export default function RecruiterWorkspace({ apiKey }) {
                           <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                             {cand.title}
                           </div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", display: "flex", gap: "6px", alignItems: "center", marginTop: "2px" }}>
-                            <IconMapPin size={11} /> {cand.location}
+                          <div style={{ fontSize: "11px", color: "#94a3b8", display: "flex", gap: "8px", alignItems: "center", marginTop: "4px", flexWrap: "wrap" }}>
+                            <span><IconMapPin size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {cand.location}</span>
+                            <a
+                              href={cand.profileUrl || `https://github.com/${cand.username}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: "#a855f7", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "3px", fontWeight: "600", background: "rgba(168, 85, 247, 0.12)", padding: "1px 6px", borderRadius: "6px", border: "1px solid rgba(168, 85, 247, 0.3)" }}
+                            >
+                              <IconExternalLink size={10} /> Original Profile
+                            </a>
+                            {cand.website && (
+                              <a
+                                href={cand.website}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ color: "#38bdf8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "3px", fontWeight: "600", background: "rgba(56, 189, 248, 0.12)", padding: "1px 6px", borderRadius: "6px", border: "1px solid rgba(56, 189, 248, 0.3)" }}
+                              >
+                                <IconGlobe size={10} /> Portfolio
+                              </a>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -483,6 +502,16 @@ export default function RecruiterWorkspace({ apiKey }) {
 
                   {/* Candidate Action Buttons */}
                   <div style={{ display: "flex", gap: "8px", paddingTop: "12px", borderTop: "1px solid var(--border-color)" }}>
+                    <a
+                      href={cand.profileUrl || `https://github.com/${cand.username}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 10px", fontSize: "11.5px", display: "inline-flex", gap: "4px", alignItems: "center", textDecoration: "none", color: "#c084fc", borderColor: "rgba(168, 85, 247, 0.4)" }}
+                      title="Open original candidate profile in new tab"
+                    >
+                      <IconExternalLink size={12} /> View Source
+                    </a>
                     <button
                       onClick={() => handleOpenOutreach(cand)}
                       className="btn btn-primary"
