@@ -60,7 +60,7 @@ import ProfileEditor from "./components/ProfileEditor.jsx";
 import RecruiterWorkspace from "./components/RecruiterWorkspace.jsx";
 import EnhancementModal from "./components/EnhancementModal.jsx";
 const API_BASE_URL =
-    "https://ai-apply-backend-414523842687.us-central1.run.app",
+    typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "http://localhost:5005" : "https://ai-apply-backend-414523842687.us-central1.run.app",
   formatUrl = (url) => {
     if (!url) return "";
     const trimmed = url.trim();
@@ -1722,7 +1722,7 @@ function App() {
           ),
             triggerSyncToast());
         } catch (ot) {
-          alert("Error parsing resume: " + ot.message);
+          toast.error("Error parsing resume: " + (ot.message || "Failed to process PDF file. Check backend connection."));
         } finally {
           setParsingResume(!1);
         }
