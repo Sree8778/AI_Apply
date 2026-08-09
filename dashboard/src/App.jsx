@@ -1766,10 +1766,12 @@ function App() {
             body: JSON.stringify({ prompt: "Hello HuggingFace" }),
           });
           if (resp.ok) {
+            const resData = await resp.json().catch(() => ({}));
             setHfKeyVerified(true);
-            toast.success("Hugging Face API Token verified successfully!");
+            toast.success(resData.message || "Hugging Face API Token verified successfully!");
           } else {
-            toast.error("Hugging Face API Token verification failed.");
+            const errData = await resp.json().catch(() => ({}));
+            toast.error(errData.error || "Hugging Face API Token verification failed. Check token permissions on huggingface.co/settings/tokens");
           }
         } catch (err) {
           toast.error("Network error connecting to backend.");

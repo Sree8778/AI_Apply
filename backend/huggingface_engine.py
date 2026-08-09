@@ -4,22 +4,88 @@ import json
 import re
 
 # Supported Hugging Face Models
-HF_TEXT_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
-HF_ALT_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
+HF_PRIMARY_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
+HF_ALT_MODELS = [
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "Qwen/Qwen2.5-7B-Instruct",
+    "meta-llama/Meta-Llama-3-8B-Instruct"
+]
 HF_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-def generate_with_huggingface(api_key, prompt, model_name=HF_TEXT_MODEL):
+def verify_hf_token(api_key):
     """
-    Generates text using Hugging Face Serverless Inference API.
+    Verifies a Hugging Face API Token using the official whoami-v2 endpoint.
+    Supports all HF User Access Token types (Read, Fine-Grained, Write).
+    """
+    if not api_key:
+        return {"success": False, "error": "Hugging Face API key is missing"}
+
+    api_key = api_key.strip()
+    headers = {"Authorization": f"Bearer {api_key}"}
+
+    try:
+        res = requests.get("https://huggingface.co/api/whoami-v2", headers=headers, timeout=10)
+        if res.ok:
+            user_data = res.json()
+            username = user_data.get("name", "User")
+            user_type = user_data.get("type", "user")
+            return {
+                "success": True,
+                "message": f"Connected to Hugging Face as {username} ({user_type})",
+                "user": username,
+                "type": user_type
+            }
+        elif res.status_code in [401, 403]:
+            return {"success": False, "error": "Invalid Hugging Face API Token. Please check your token on huggingface.co/settings/tokens"}
+        else:
+            return {"success": False, "error": f"Hugging Face WhoAmI returned HTTP {res.status_code}: {res.text}"}
+    except Exception as e:
+        print(f"[HuggingFace WhoAmI Exception]: {e}")
+        # Fallback to simple inference generation test if whoami endpoint is blocked
+        try:
+            gen_res = generate_with_huggingface(api_key, "Test prompt")
+            if gen_res:
+                return {"success": True, "message": "Hugging Face Inference API connected successfully!"}
+        except Exception as gen_err:
+            return {"success": False, "error": str(gen_err)}
+
+    return {"success": False, "error": "Hugging Face Token verification failed"}
+
+def generate_with_huggingface(api_key, prompt, model_name=HF_PRIMARY_MODEL):
+    """
+    Generates text using Hugging Face Serverless Inference API with multi-model failover.
     """
     if not api_key:
         raise ValueError("Hugging Face API Key is missing")
 
-    url = f"https://api-inference.huggingface.co/models/{model_name}"
+    api_key = api_key.strip()
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
+
+    # 1. Try Chat Completions Router Endpoint
+    router_url = "https://router.huggingface.co/hf-inference/v1/chat/completions"
+    router_payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 512,
+        "temperature": 0.3
+    }
+    try:
+        r_res = requests.post(router_url, headers=headers, json=router_payload, timeout=12)
+        if r_res.ok:
+            r_data = r_res.json()
+            choices = r_data.get("choices", [])
+            if choices and len(choices) > 0:
+                msg = choices[0].get("message", {}).get("content", "")
+                if msg.strip():
+                    return msg.strip()
+    except Exception as e:
+        print(f"[HF Router Exception]: {e}")
+
+    # 2. Try Standard Serverless Inference URL for primary model + alt models
+    models_to_try = [model_name] + [m for m in HF_ALT_MODELS if m != model_name]
     payload = {
         "inputs": prompt,
         "parameters": {
@@ -29,28 +95,25 @@ def generate_with_huggingface(api_key, prompt, model_name=HF_TEXT_MODEL):
         }
     }
 
-    try:
-        res = requests.post(url, headers=headers, json=payload, timeout=15)
-        if res.ok:
-            data = res.json()
-            if isinstance(data, list) and len(data) > 0:
-                return data[0].get("generated_text", "").strip()
-            elif isinstance(data, dict):
-                return data.get("generated_text", "").strip()
-        else:
-            # Try alternate Mistral model if primary model is loading/unavailable
-            alt_url = f"https://api-inference.huggingface.co/models/{HF_ALT_MODEL}"
-            alt_res = requests.post(alt_url, headers=headers, json=payload, timeout=12)
-            if alt_res.ok:
-                data = alt_res.json()
+    for target_model in models_to_try:
+        url = f"https://api-inference.huggingface.co/models/{target_model}"
+        try:
+            res = requests.post(url, headers=headers, json=payload, timeout=10)
+            if res.ok:
+                data = res.json()
                 if isinstance(data, list) and len(data) > 0:
-                    return data[0].get("generated_text", "").strip()
+                    text_out = data[0].get("generated_text", "").strip()
+                    if text_out:
+                        return text_out
+                elif isinstance(data, dict):
+                    text_out = data.get("generated_text", "").strip()
+                    if text_out:
+                        return text_out
+        except Exception as err:
+            print(f"[HF Model {target_model} Exception]: {err}")
+            continue
 
-            print(f"[HuggingFace Engine] HTTP Error {res.status_code}: {res.text}")
-            raise RuntimeError(f"Hugging Face API returned error status {res.status_code}")
-    except Exception as e:
-        print(f"[HuggingFace Engine] Exception: {e}")
-        raise e
+    raise RuntimeError("Hugging Face Serverless Inference unavailable across all model endpoints. Please check token permissions.")
 
 def compute_cosine_similarity(vec1, vec2):
     """
@@ -71,6 +134,7 @@ def compute_hf_semantic_ats_score(resume_text, job_description, api_key):
     if not api_key or not resume_text or not job_description:
         return None
 
+    api_key = api_key.strip()
     url = f"https://api-inference.huggingface.co/models/{HF_EMBEDDING_MODEL}"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -78,7 +142,6 @@ def compute_hf_semantic_ats_score(resume_text, job_description, api_key):
     }
 
     try:
-        # Request feature extraction / embeddings
         payload = {"inputs": [resume_text[:2000], job_description[:2000]]}
         res = requests.post(url, headers=headers, json=payload, timeout=10)
 
@@ -88,7 +151,6 @@ def compute_hf_semantic_ats_score(resume_text, job_description, api_key):
                 vec_resume = embeddings[0]
                 vec_jd = embeddings[1]
                 
-                # Handle nested array representation
                 if isinstance(vec_resume[0], list):
                     vec_resume = vec_resume[0]
                 if isinstance(vec_jd[0], list):
@@ -101,7 +163,7 @@ def compute_hf_semantic_ats_score(resume_text, job_description, api_key):
                     "similarity": round(similarity, 3)
                 }
     except Exception as e:
-        print(f"[HuggingFace Embeddings ATS] Exception: {e}")
+        print(f"[HuggingFace Embeddings ATS Exception]: {e}")
 
     return None
 
@@ -112,7 +174,7 @@ def hf_enhance_section(api_key, section_name, text_to_enhance, job_description="
     prompt = f"You are an expert ATS resume writer. Enhance the following resume {section_name} to be impactful, quantifiable, and optimized for key job requirements.\n\nOriginal Text: {text_to_enhance}\n\nJob Description: {job_description}\n\nProvide 3 distinct enhanced bullet points. Format output clearly."
     enhanced_output = generate_with_huggingface(api_key, prompt)
 
-    bullets = [b.strip().replace(/^[-•*]\s*/, "") for b in enhanced_output.split("\n") if b.strip()]
+    bullets = [re.sub(r'^[-•*]\s*', '', b.strip()) for b in enhanced_output.split("\n") if b.strip()]
     if len(bullets) < 3:
         bullets = [
             f"Optimized {section_name} delivering quantifiable efficiency gains and technical excellence.",

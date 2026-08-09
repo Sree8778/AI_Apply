@@ -895,11 +895,11 @@ def test_huggingface_connection():
     if not hf_key:
         return jsonify({"success": False, "error": "Hugging Face API token missing"}), 400
 
-    try:
-        res = huggingface_engine.generate_with_huggingface(hf_key, "Say hello!")
-        return jsonify({"success": True, "message": "Hugging Face API connected successfully!", "response": res}), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    res = huggingface_engine.verify_hf_token(hf_key)
+    if res.get("success"):
+        return jsonify(res), 200
+    else:
+        return jsonify(res), 400
 
 if __name__ == '__main__':
     # Local dev only. In Cloud Run, gunicorn imports `app` directly (see Dockerfile)
