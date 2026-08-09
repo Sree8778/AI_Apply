@@ -1740,6 +1740,7 @@ function App() {
             headers: {
               "Content-Type": "application/json",
               "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
             },
             body: JSON.stringify({
               resumeData: activeProfile,
@@ -1849,6 +1850,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -1964,8 +1966,8 @@ function App() {
       }
     },
     handleAnalyzeAts = async () => {
-      if (!apiKey) {
-        alert("Please configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (!jobDescription) {
@@ -1979,6 +1981,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2038,8 +2041,8 @@ function App() {
       toast.success(`Added "${D}" to your Skills.`);
     },
     handleCompileCareerTemplate = async () => {
-      if (!apiKey) {
-        alert("Please configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       (setCompilingTemplate(!0), setTemplateOutput(""));
@@ -2049,6 +2052,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2070,8 +2074,8 @@ function App() {
       }
     },
     handleGenerateLatexResume = async () => {
-      if (!apiKey) {
-        alert("Please configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (!jobDescription) {
@@ -2092,6 +2096,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2211,8 +2216,8 @@ function App() {
       );
     },
     handleGenerateOutreach = async () => {
-      if (!apiKey) {
-        alert("Please configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (!outreachContactName) {
@@ -2230,6 +2235,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2252,8 +2258,8 @@ function App() {
       }
     },
     handleGenerateMockQuestions = async () => {
-      if (!apiKey) {
-        alert("Please configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (!jobDescription) {
@@ -2271,6 +2277,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2367,8 +2374,8 @@ function App() {
       }
     },
     startVoiceInterview = async () => {
-      if (!apiKey) {
-        alert("API key missing. Load in settings.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       (setVoiceConversation([]),
@@ -2385,6 +2392,7 @@ function App() {
             headers: {
               "Content-Type": "application/json",
               "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
             },
             body: JSON.stringify({
               conversation: [],
@@ -2432,6 +2440,7 @@ function App() {
               headers: {
                 "Content-Type": "application/json",
                 "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
               },
               body: JSON.stringify({
                 conversation: D,
@@ -2458,6 +2467,7 @@ function App() {
               headers: {
                 "Content-Type": "application/json",
                 "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
               },
               body: JSON.stringify({
                 conversation: D,
@@ -2496,8 +2506,8 @@ function App() {
         setVoiceRoomStage("setup"));
     },
     handleGradeWrittenAnswer = async () => {
-      if (!apiKey) {
-        alert("API key missing.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (selectedQuestionIndex === null || !writtenAnswer) {
@@ -2511,6 +2521,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             question: mockQuestions[selectedQuestionIndex],
@@ -2565,8 +2576,8 @@ function App() {
       }
     },
     handleAutoApply = async (D) => {
-      if (!apiKey) {
-        alert("Configure API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       (setAutoApplyingJobId(D.id),
@@ -2582,6 +2593,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
@@ -2683,8 +2695,8 @@ function App() {
         document.body.removeChild(Ce));
     },
     handleGenerateFollowUp = async (D) => {
-      if (!apiKey) {
-        alert("Configure your Gemini API Key in Settings first.");
+      if (!isAiKeyConfigured()) {
+        toast.error(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       (setFollowUpTargetApp(D), setGeneratingFollowUp(!0), setFollowUpText(""));
@@ -2694,6 +2706,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
             "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
           },
           body: JSON.stringify({
             resumeData: activeProfile,
