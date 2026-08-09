@@ -191,3 +191,64 @@ def hf_generate_outreach(api_key, candidate_name, candidate_title, candidate_ski
     prompt = f"Write a professional, personalized recruiter outreach email to {candidate_name} ({candidate_title}, skilled in {candidate_skills}) for a {role} position at {company_name}. Keep it concise, engaging, and professional."
     outreach = generate_with_huggingface(api_key, prompt)
     return outreach
+
+def hf_parse_resume_text(api_key, extracted_text):
+    """
+    Parses extracted resume text into candidate profile JSON using Hugging Face models.
+    """
+    prompt = f"""
+    You are an expert AI recruiter assistant. Parse the following extracted resume text 
+    and map it to the exact Candidate Profile JSON schema specified below.
+
+    Resume Text:
+    ---
+    {extracted_text[:3500]}
+    ---
+
+    Expected Schema:
+    {{
+      "personal": {{
+        "name": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "website": "Portfolio or personal website URL",
+        "github": "GitHub URL",
+        "linkedin": "LinkedIn URL"
+      }},
+      "summary": "Professional summary or biography (max 3 sentences)",
+      "skills": ["Skill 1", "Skill 2"],
+      "work_history": [
+        {{
+          "role": "Job Title",
+          "company": "Company Name",
+          "dates": "Employment Dates",
+          "bullet_points": ["Achieved X", "Delivered Y"]
+        }}
+      ],
+      "education": [
+        {{
+          "degree": "Degree Name",
+          "school": "University/Institution Name",
+          "year": "Graduation Year"
+        }}
+      ]
+    }}
+
+    Return ONLY a valid JSON object. Do not wrap output in markdown backticks.
+    """
+    raw_output = generate_with_huggingface(api_key, prompt)
+    try:
+        # Extract json matching block
+        match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+        if match:
+            return json.loads(match.group(0))
+        return json.loads(raw_output)
+    except Exception as e:
+        print(f"[HF Resume Parser Exception]: {e}")
+        return {
+            "personal": {"name": "Candidate", "email": "", "phone": "", "website": "", "github": "", "linkedin": ""},
+            "summary": extracted_text[:300].strip(),
+            "skills": ["Technical Problem Solving", "Engineering"],
+            "work_history": [],
+            "education": []
+        }

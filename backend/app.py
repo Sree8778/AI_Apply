@@ -422,8 +422,7 @@ def api_generate_latex_tex():
 @app.route('/api/parse-resume', methods=['POST'])
 def api_parse_resume():
     api_key = request.headers.get('X-Gemini-Key') or request.form.get('apiKey')
-    if not api_key:
-        return jsonify({"error": "Gemini API Key is missing. Add it in settings first."}), 400
+    hf_key = request.headers.get('X-HuggingFace-Key') or request.form.get('hfApiKey')
     
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -437,7 +436,7 @@ def api_parse_resume():
 
     try:
         pdf_bytes = file.read()
-        parsed_data = parse_resume_pdf(api_key, pdf_bytes)
+        parsed_data = parse_resume_pdf(api_key, pdf_bytes, hf_key=hf_key)
         return jsonify(parsed_data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

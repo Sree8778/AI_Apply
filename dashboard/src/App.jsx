@@ -793,6 +793,19 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [skipAuth, setSkipAuth] = useState(() => localStorage.getItem("ai_apply_skip_auth") === "true");
 
+  // Helper to check if AI Key is configured based on active provider preference
+  const isAiKeyConfigured = () => {
+    if (aiProvider === "huggingface") return !!hfApiKey;
+    if (aiProvider === "gemini") return !!apiKey;
+    return !!apiKey || !!hfApiKey;
+  };
+
+  const getActiveAiKeyName = () => {
+    if (aiProvider === "huggingface") return "Hugging Face API Token";
+    if (aiProvider === "gemini") return "Gemini API Key";
+    return "Gemini or Hugging Face API Key";
+  };
+
   // TAILORING WORKSPACE MODE STATE
   const [tailoringWorkspaceMode, setTailoringWorkspaceMode] = useState("select"); // "select" | "fresh" | "jd"
   const [showLatexSource, setShowLatexSource] = useState(false);
@@ -1579,9 +1592,9 @@ function App() {
     handleParsePdfUpload = async (D) => {
       const W = D.target.files[0];
       if (!W) return;
-      if (!apiKey) {
-        alert(
-          "Please add your Gemini API Key in the Settings tab first to parse resumes.",
+      if (!isAiKeyConfigured()) {
+        toast.error(
+          `Please add your ${getActiveAiKeyName()} in the Settings tab first to parse resumes.`
         );
         return;
       }
@@ -1601,6 +1614,7 @@ function App() {
             method: "POST",
             headers: {
               "X-Gemini-Key": apiKey,
+              "X-HuggingFace-Key": hfApiKey,
             },
             body: it,
           });
@@ -1818,10 +1832,8 @@ function App() {
       setVerifyingHfKey(false);
     },
     handleGenerateCoverLetter = async () => {
-      if (!apiKey) {
-        setCoverLetterError(
-          "Please configure your Gemini API Key in Settings first.",
-        );
+      if (!isAiKeyConfigured()) {
+        setCoverLetterError(`Please configure your ${getActiveAiKeyName()} in Settings first.`);
         return;
       }
       if (!jobDescription) {

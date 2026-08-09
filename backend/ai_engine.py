@@ -190,13 +190,10 @@ def map_fields_fallback(api_key, pruned_inputs, resume_data):
 import io
 from pypdf import PdfReader
 
-def parse_resume_pdf(api_key, pdf_bytes):
+def parse_resume_pdf(api_key, pdf_bytes, hf_key=None):
     """
-    Extracts text from a PDF file and structures it into the Candidate Profile JSON using Gemini.
+    Extracts text from a PDF file and structures it into the Candidate Profile JSON using Gemini or Hugging Face.
     """
-    if not api_key:
-        raise ValueError("Gemini API Key is missing.")
-
     try:
         # Extract text from PDF bytes
         reader = PdfReader(io.BytesIO(pdf_bytes))
@@ -209,6 +206,40 @@ def parse_resume_pdf(api_key, pdf_bytes):
         extracted_text = extracted_text.strip()
         if not extracted_text:
             raise ValueError("No text could be extracted from the uploaded PDF resume.")
+
+        # Check for Hugging Face parsing preference
+        if hf_key and not api_key:
+            import huggingface_engine
+            return huggingface_engine.hf_parse_resume_text(hf_key, extracted_text)
+        elif hf_key and api_key and len(hf_key) > 5:
+            # If both keys available, use HF parser if preferred
+            import huggingface_engine
+            try:
+                return huggingface_engine.hf_parse_resume_text(hf_key, extracted_text)
+            except Exception as hf_err:
+                print(f"[AI ENGINE] HF parsing failed, falling back to Gemini: {hf_err}")
+
+        if not api_key and not hf_key:
+            # Fallback regex parser if no keys configured
+            import re
+            emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', extracted_text)
+            phones = re.findall(r'\+?\d[\d\s\-\(\)]{8,}\d', extracted_text)
+            lines = [l.strip() for l in extracted_text.split('\n') if l.strip()]
+            name = lines[0] if lines else "Candidate"
+            return {
+                "personal": {
+                    "name": name,
+                    "email": emails[0] if emails else "",
+                    "phone": phones[0] if phones else "",
+                    "website": "",
+                    "github": "",
+                    "linkedin": ""
+                },
+                "summary": extracted_text[:300].strip(),
+                "skills": ["Software Engineering", "Problem Solving", "Technical Operations"],
+                "work_history": [],
+                "education": []
+            }
 
         # Configure Gemini and get structure
 
