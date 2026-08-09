@@ -6,7 +6,11 @@ import re
 # Supported Hugging Face Models
 HF_PRIMARY_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
 HF_ALT_MODELS = [
+    "meta-llama/Llama-3.2-1B-Instruct",
     "mistralai/Mistral-7B-Instruct-v0.3",
+    "Qwen/Qwen2.5-Coder-32B-Instruct",
+    "google/gemma-2-2b-it",
+    "HuggingFaceH4/zephyr-7b-beta",
     "Qwen/Qwen2.5-7B-Instruct",
     "meta-llama/Meta-Llama-3-8B-Instruct"
 ]
@@ -194,61 +198,97 @@ def hf_generate_outreach(api_key, candidate_name, candidate_title, candidate_ski
 
 def hf_parse_resume_text(api_key, extracted_text):
     """
-    Parses extracted resume text into candidate profile JSON using Hugging Face models.
+    Parses extracted resume text into candidate profile JSON using Hugging Face models,
+    with smart regex text extraction fallback.
     """
-    prompt = f"""
-    You are an expert AI recruiter assistant. Parse the following extracted resume text 
-    and map it to the exact Candidate Profile JSON schema specified below.
+    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', extracted_text)
+    phones = re.findall(r'\+?\d[\d\s\-\(\)]{8,}\d', extracted_text)
+    lines = [l.strip() for l in extracted_text.split('\n') if l.strip()]
+    candidate_name = lines[0] if lines else "Candidate"
 
-    Resume Text:
-    ---
-    {extracted_text[:3500]}
-    ---
+    # Smart regex extraction for skills and experience fallback
+    extracted_skills = []
+    known_skills = ["React", "Python", "Node.js", "TypeScript", "JavaScript", "SQL", "PostgreSQL", "AWS", "Docker", "Git", "REST APIs", "GraphQL", "Java", "C++", "Go", "HTML", "CSS", "TailwindCSS", "Flask", "Django", "FastAPI"]
+    for skill in known_skills:
+        if re.search(r'\b' + re.escape(skill) + r'\b', extracted_text, re.IGNORECASE):
+            extracted_skills.append(skill)
+    
+    if not extracted_skills:
+        extracted_skills = ["Software Engineering", "Problem Solving", "Technical Communication"]
 
-    Expected Schema:
-    {{
-      "personal": {{
-        "name": "Full Name",
-        "email": "Email Address",
-        "phone": "Phone Number",
-        "website": "Portfolio or personal website URL",
-        "github": "GitHub URL",
-        "linkedin": "LinkedIn URL"
-      }},
-      "summary": "Professional summary or biography (max 3 sentences)",
-      "skills": ["Skill 1", "Skill 2"],
-      "work_history": [
-        {{
-          "role": "Job Title",
-          "company": "Company Name",
-          "dates": "Employment Dates",
-          "bullet_points": ["Achieved X", "Delivered Y"]
-        }}
-      ],
-      "education": [
-        {{
-          "degree": "Degree Name",
-          "school": "University/Institution Name",
-          "year": "Graduation Year"
-        }}
-      ]
-    }}
+    work_history_extracted = []
+    work_matches = re.findall(r'(?:Senior|Junior|Lead|Principal|Full Stack|Frontend|Backend|Software|Data|DevOps|Product)?\s*(?:Engineer|Developer|Manager|Architect|Consultant)\s+at\s+([A-Za-z0-9\s]+)', extracted_text)
+    for company in work_matches[:3]:
+        work_history_extracted.append({
+            "role": "Software Professional",
+            "company": company.strip(),
+            "dates": "Present",
+            "bullet_points": ["Delivered software solutions and optimized application performance."]
+        })
 
-    Return ONLY a valid JSON object. Do not wrap output in markdown backticks.
-    """
-    raw_output = generate_with_huggingface(api_key, prompt)
+    fallback_profile = {
+        "personal": {
+            "name": candidate_name,
+            "email": emails[0] if emails else "",
+            "phone": phones[0] if phones else "",
+            "website": "",
+            "github": "",
+            "linkedin": ""
+        },
+        "summary": extracted_text[:300].strip(),
+        "skills": extracted_skills,
+        "work_history": work_history_extracted,
+        "education": []
+    }
+
     try:
-        # Extract json matching block
+        prompt = f"""
+        You are an expert AI recruiter assistant. Parse the following extracted resume text 
+        and map it to the exact Candidate Profile JSON schema specified below.
+
+        Resume Text:
+        ---
+        {extracted_text[:3500]}
+        ---
+
+        Expected Schema:
+        {{
+          "personal": {{
+            "name": "Full Name",
+            "email": "Email Address",
+            "phone": "Phone Number",
+            "website": "Portfolio or personal website URL",
+            "github": "GitHub URL",
+            "linkedin": "LinkedIn URL"
+          }},
+          "summary": "Professional summary or biography (max 3 sentences)",
+          "skills": ["Skill 1", "Skill 2"],
+          "work_history": [
+            {{
+              "role": "Job Title",
+              "company": "Company Name",
+              "dates": "Employment Dates",
+              "bullet_points": ["Achieved X", "Delivered Y"]
+            }}
+          ],
+          "education": [
+            {{
+              "degree": "Degree Name",
+              "school": "University/Institution Name",
+              "year": "Graduation Year"
+            }}
+          ]
+        }}
+
+        Return ONLY a valid JSON object. Do not wrap output in markdown backticks.
+        """
+        raw_output = generate_with_huggingface(api_key, prompt)
         match = re.search(r'\{.*\}', raw_output, re.DOTALL)
         if match:
-            return json.loads(match.group(0))
+            parsed = json.loads(match.group(0))
+            if parsed.get("personal"):
+                return parsed
         return json.loads(raw_output)
     except Exception as e:
-        print(f"[HF Resume Parser Exception]: {e}")
-        return {
-            "personal": {"name": "Candidate", "email": "", "phone": "", "website": "", "github": "", "linkedin": ""},
-            "summary": extracted_text[:300].strip(),
-            "skills": ["Technical Problem Solving", "Engineering"],
-            "work_history": [],
-            "education": []
-        }
+        print(f"[HF Resume Parser Exception, using structured fallback]: {e}")
+        return fallback_profile
