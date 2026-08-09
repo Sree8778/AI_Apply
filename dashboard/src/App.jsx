@@ -1751,6 +1751,33 @@ function App() {
         }
       }
     },
+    handleVerifyHfApiKey = async () => {
+      if (hfApiKey) {
+        setVerifyingHfKey(true);
+        setHfKeyVerified(false);
+        try {
+          const getBackendUrl = () => (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:5005" : "https://ai-apply-backend-414523842687.us-central1.run.app");
+          const resp = await fetch(`${getBackendUrl()}/api/huggingface/test-connection`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-HuggingFace-Key": hfApiKey,
+            },
+            body: JSON.stringify({ prompt: "Hello HuggingFace" }),
+          });
+          if (resp.ok) {
+            setHfKeyVerified(true);
+            toast.success("Hugging Face API Token verified successfully!");
+          } else {
+            toast.error("Hugging Face API Token verification failed.");
+          }
+        } catch (err) {
+          toast.error("Network error connecting to backend.");
+        } finally {
+          setVerifyingHfKey(false);
+        }
+      }
+    },
     handleGenerateCoverLetter = async () => {
       if (!apiKey) {
         setCoverLetterError(
