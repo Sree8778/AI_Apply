@@ -1752,33 +1752,70 @@ function App() {
       }
     },
     handleVerifyHfApiKey = async () => {
-      if (hfApiKey) {
-        setVerifyingHfKey(true);
-        setHfKeyVerified(false);
+      if (!hfApiKey) return;
+      setVerifyingHfKey(true);
+      setHfKeyVerified(false);
+
+      const candidateUrls = [
+        "http://localhost:5005",
+        "http://localhost:5000",
+        "https://ai-apply-backend-414523842687.us-central1.run.app"
+      ];
+
+      let verified = false;
+      let lastErrorMessage = "";
+
+      const cleanKey = hfApiKey.trim();
+
+      for (const baseUrl of candidateUrls) {
         try {
-          const getBackendUrl = () => (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:5005" : "https://ai-apply-backend-414523842687.us-central1.run.app");
-          const resp = await fetch(`${getBackendUrl()}/api/huggingface/test-connection`, {
+          const resp = await fetch(`${baseUrl}/api/huggingface/test-connection`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-HuggingFace-Key": hfApiKey,
+              "X-HuggingFace-Key": cleanKey,
             },
             body: JSON.stringify({ prompt: "Hello HuggingFace" }),
           });
-          if (resp.ok) {
-            const resData = await resp.json().catch(() => ({}));
+          const resData = await resp.json().catch(() => ({}));
+          if (resp.ok && resData.success) {
             setHfKeyVerified(true);
             toast.success(resData.message || "Hugging Face API Token verified successfully!");
-          } else {
-            const errData = await resp.json().catch(() => ({}));
-            toast.error(errData.error || "Hugging Face API Token verification failed. Check token permissions on huggingface.co/settings/tokens");
+            verified = true;
+            break;
+          } else if (resData.error) {
+            lastErrorMessage = resData.error;
+            break;
           }
-        } catch (err) {
-          toast.error("Network error connecting to backend.");
-        } finally {
-          setVerifyingHfKey(false);
+        } catch (e) {
+          // Continue to next backend candidate URL
         }
       }
+
+      if (!verified && !lastErrorMessage) {
+        try {
+          const hfRes = await fetch("https://huggingface.co/api/whoami-v2", {
+            headers: { Authorization: `Bearer ${cleanKey}` }
+          });
+          if (hfRes.ok) {
+            const hfUser = await hfRes.json().catch(() => ({}));
+            const name = hfUser.name || "User";
+            setHfKeyVerified(true);
+            toast.success(`Connected directly to Hugging Face as ${name}!`);
+            verified = true;
+          } else if (hfRes.status === 401 || hfRes.status === 403) {
+            lastErrorMessage = "Invalid Hugging Face Token. Check your token at huggingface.co/settings/tokens";
+          }
+        } catch (clientErr) {
+          lastErrorMessage = "Network error connecting to Hugging Face API.";
+        }
+      }
+
+      if (!verified) {
+        toast.error(lastErrorMessage || "Hugging Face API Token verification failed.");
+      }
+
+      setVerifyingHfKey(false);
     },
     handleGenerateCoverLetter = async () => {
       if (!apiKey) {

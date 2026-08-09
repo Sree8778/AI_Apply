@@ -6,6 +6,7 @@ import requests
 from ai_engine import solve_questions, generate_cover_letter, map_fields_fallback, parse_resume_pdf, evaluate_ats_score, generate_mock_questions, grade_mock_answer, suggest_buddy_answer, generate_career_template, generate_tailored_resume, generate_voice_interview_turn, evaluate_voice_interview, enhance_section
 from automation_engine import submit_application_headless
 from scraper import scrape_linkedin_jobs, scrape_indeed_jobs
+import huggingface_engine
 app = Flask(__name__)
 CORS(app)  # Enable CORS for Chrome Extension and React Dashboard
 
@@ -905,4 +906,4 @@ if __name__ == '__main__':
     # Local dev only. In Cloud Run, gunicorn imports `app` directly (see Dockerfile)
     # and debug mode / the Flask dev server are never used.
     port = int(os.environ.get('PORT', 5005))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
