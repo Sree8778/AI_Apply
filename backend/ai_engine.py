@@ -1,3 +1,93 @@
+
+def normalize_parsed_resume(data, raw_text):
+    """
+    Normalizes candidate profile JSON across Gemini, Hugging Face, and Regex extractors.
+    """
+    if not isinstance(data, dict):
+        data = {}
+        
+    personal = data.get("personal", {})
+    if not isinstance(personal, dict):
+        personal = {}
+    
+    lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
+    candidate_name = personal.get("name") or data.get("name") or data.get("full_name")
+    if not candidate_name or candidate_name == "Candidate":
+        candidate_name = lines[0] if lines else "Candidate"
+    
+    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', raw_text)
+    phones = re.findall(r'\+?\d[\d\s\-\(\)]{8,}\d', raw_text)
+    
+    email = personal.get("email") or data.get("email") or (emails[0] if emails else "")
+    phone = personal.get("phone") or data.get("phone") or (phones[0] if phones else "")
+    
+    skills = data.get("skills") or []
+    if isinstance(skills, str):
+        skills = [s.strip() for s in skills.split(",") if s.strip()]
+    elif not isinstance(skills, list):
+        skills = []
+    
+    if not skills:
+        known_skills = ["React", "Python", "Node.js", "TypeScript", "JavaScript", "SQL", "PostgreSQL", "AWS", "Docker", "Git", "REST APIs", "GraphQL", "Java", "C++", "Go", "HTML", "CSS", "TailwindCSS", "Flask", "Django", "FastAPI"]
+        for s in known_skills:
+            if re.search(r'\b' + re.escape(s) + r'\b', raw_text, re.IGNORECASE):
+                skills.append(s)
+
+    work_list = data.get("work_history") or data.get("workExperience") or data.get("experience") or data.get("history") or []
+    normalized_work = []
+    if isinstance(work_list, list):
+        for item in work_list:
+            if isinstance(item, dict):
+                role = item.get("role") or item.get("position") or item.get("job_title") or "Software Professional"
+                company = item.get("company") or item.get("employer") or ""
+                dates = item.get("dates") or item.get("duration") or item.get("year") or ""
+                achievements = item.get("achievements") or item.get("bullet_points") or item.get("description") or []
+                if isinstance(achievements, str):
+                    achievements = [a.strip().lstrip("-•* ") for a in achievements.split("\n") if a.strip()]
+                normalized_work.append({
+                    "role": role,
+                    "position": role,
+                    "company": company,
+                    "dates": dates,
+                    "duration": dates,
+                    "achievements": achievements,
+                    "bullet_points": achievements,
+                    "description": "\n".join(achievements) if isinstance(achievements, list) else str(achievements)
+                })
+
+    edu_list = data.get("education") or data.get("academic") or []
+    normalized_edu = []
+    if isinstance(edu_list, list):
+        for item in edu_list:
+            if isinstance(item, dict):
+                degree = item.get("degree") or item.get("field_of_study") or ""
+                school = item.get("school") or item.get("institution") or item.get("university") or ""
+                year = item.get("year") or item.get("dates") or item.get("duration") or ""
+                normalized_edu.append({
+                    "degree": degree,
+                    "school": school,
+                    "institution": school,
+                    "year": year,
+                    "duration": year
+                })
+
+    return {
+        "personal": {
+            "name": candidate_name,
+            "email": email,
+            "phone": phone,
+            "website": personal.get("website", ""),
+            "github": personal.get("github", ""),
+            "linkedin": personal.get("linkedin", "")
+        },
+        "summary": data.get("summary") or raw_text[:300].strip(),
+        "skills": skills,
+        "work_history": normalized_work,
+        "education": normalized_edu,
+        "projects": data.get("projects", [])
+    }
+
+
 import json
 import re
 import google.generativeai as genai
@@ -313,12 +403,11 @@ def parse_resume_pdf(api_key, pdf_bytes, hf_key=None):
         """
 
         text = generate_with_gemini(api_key, prompt)
-        
         result = parse_ai_json(text)
-        return result
+        return normalize_parsed_resume(result, extracted_text)
     except Exception as e:
-        print(f"[AI ENGINE] Resume parsing failed: {e}")
-        raise RuntimeError(f"Resume Parsing Error: {str(e)}")
+        print(f"[AI ENGINE] AI model parsing exception, utilizing smart text normalizer: {e}")
+        return normalize_parsed_resume({}, extracted_text)
 
 def evaluate_ats_score(api_key, resume_data, job_description):
     """
