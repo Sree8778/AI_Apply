@@ -705,8 +705,71 @@ ${latexSections.join("\n\n")}
 
 function App() {
   var Y, Z, xe, Je, Qt, _t, zt, Pr, Si, Wr, Yr, Qs, La;
-  const [view, setView] = useState("landing");
-  const [activeTab, setActiveTab] = useState("overview");
+
+  // Multi-Page URL Route Map
+  const routeMap = {
+    "/": { view: "landing", activeTab: "overview", title: "CareerCraft | AI Job Application Assistant" },
+    "/dashboard": { view: "dashboard", activeTab: "overview", title: "Overview Dashboard | CareerCraft" },
+    "/jobs": { view: "dashboard", activeTab: "job-board", title: "Auto-Apply Feed | CareerCraft" },
+    "/profile": { view: "dashboard", activeTab: "profile", title: "Personal Profile Editor | CareerCraft" },
+    "/tailor": { view: "dashboard", activeTab: "tailoring-workspace", title: "Resume Tailoring Studio | CareerCraft" },
+    "/recruiter": { view: "dashboard", activeTab: "recruiter", title: "Recruiter AI Workspace | CareerCraft" },
+    "/interview": { view: "dashboard", activeTab: "mock-coach", title: "Mock Interview Coach | CareerCraft" },
+    "/templates": { view: "dashboard", activeTab: "career-templates", title: "Career Templates | CareerCraft" },
+    "/settings": { view: "dashboard", activeTab: "settings", title: "AI & BYOK Settings | CareerCraft" },
+  };
+
+  const getInitialRoute = () => {
+    const path = typeof window !== "undefined" ? window.location.pathname : "/";
+    if (routeMap[path]) return routeMap[path];
+    if (path.startsWith("/dashboard")) return routeMap["/dashboard"];
+    if (path.startsWith("/recruiter")) return routeMap["/recruiter"];
+    if (path.startsWith("/profile")) return routeMap["/profile"];
+    if (path.startsWith("/jobs")) return routeMap["/jobs"];
+    if (path.startsWith("/tailor")) return routeMap["/tailor"];
+    if (path.startsWith("/interview")) return routeMap["/interview"];
+    if (path.startsWith("/settings")) return routeMap["/settings"];
+    return routeMap["/"];
+  };
+
+  const initialRoute = getInitialRoute();
+  const [view, setView] = useState(initialRoute.view);
+  const [activeTab, setActiveTab] = useState(initialRoute.activeTab);
+
+  const navigateToRoute = (path) => {
+    const config = routeMap[path];
+    if (config) {
+      setView(config.view);
+      setActiveTab(config.activeTab);
+      document.title = config.title;
+      if (window.location.pathname !== path) {
+        window.history.pushState({ path }, "", path);
+      }
+    }
+  };
+
+  // Sync state on browser Back / Forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentPath = window.location.pathname;
+      const config = routeMap[currentPath] || routeMap["/"];
+      setView(config.view);
+      setActiveTab(config.activeTab);
+      document.title = config.title;
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Update document title on tab switch
+  useEffect(() => {
+    const path = Object.keys(routeMap).find(
+      (p) => routeMap[p].view === view && routeMap[p].activeTab === activeTab
+    ) || "/";
+    if (routeMap[path]) {
+      document.title = routeMap[path].title;
+    }
+  }, [view, activeTab]);
   const [showSyncToast, setShowSyncToast] = useState(false);
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("ai_apply_theme") || "dark");
@@ -2606,7 +2669,7 @@ function App() {
           </a>
         </div>
         <button
-          onClick={() => setView("dashboard")}
+          onClick={() => navigateToRoute("/dashboard")}
           className="btn btn-primary"
         >
           {"Launch Dashboard "}
@@ -2624,7 +2687,7 @@ function App() {
         </p>
         <div className="hero-buttons">
           <button
-            onClick={() => setView("dashboard")}
+            onClick={() => navigateToRoute("/dashboard")}
             className="btn btn-primary"
             style={{
               padding: "16px 32px",
@@ -2895,7 +2958,7 @@ function App() {
               </div>
             </div>
             <button
-              onClick={() => setView("dashboard")}
+              onClick={() => navigateToRoute("/dashboard")}
               className="btn btn-primary"
               style={{
                 width: "100%",
@@ -3057,14 +3120,14 @@ function App() {
             </div>
             <button
               className={`nav-item ${activeTab === "overview" ? "active" : ""}`}
-              onClick={() => setActiveTab("overview")}
+              onClick={() => navigateToRoute("/dashboard")}
             >
               <IconLayoutDashboard size={18} />
               {"Overview"}
             </button>
             <button
               className={`nav-item ${activeTab === "job-board" ? "active" : ""}`}
-              onClick={() => setActiveTab("job-board")}
+              onClick={() => navigateToRoute("/jobs")}
             >
               <IconSearch size={18} />
               {"Auto-Apply Feed"}
@@ -3083,7 +3146,7 @@ function App() {
             </div>
             <button
               className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
-              onClick={() => setActiveTab("profile")}
+              onClick={() => navigateToRoute("/profile")}
             >
               <IconUser size={18} />
               {"Personal Profile"}
@@ -3102,7 +3165,7 @@ function App() {
             </div>
             <button
               className={`nav-item ${activeTab === "tailoring-workspace" ? "active" : ""}`}
-              onClick={() => setActiveTab("tailoring-workspace")}
+              onClick={() => navigateToRoute("/tailor")}
             >
               <IconSparkles
                 size={18}
@@ -3114,7 +3177,7 @@ function App() {
             </button>
             <button
               className={`nav-item ${activeTab === "recruiter" ? "active" : ""}`}
-              onClick={() => setActiveTab("recruiter")}
+              onClick={() => navigateToRoute("/recruiter")}
             >
               <IconUserCheck size={18} style={{ color: "#a855f7" }} />
               {"Recruiter Workspace"}
@@ -3133,14 +3196,14 @@ function App() {
             </div>
             <button
               className={`nav-item ${activeTab === "mock-coach" ? "active" : ""}`}
-              onClick={() => setActiveTab("mock-coach")}
+              onClick={() => navigateToRoute("/interview")}
             >
               <IconMessageSquare size={18} />
               {"Mock Interview"}
             </button>
             <button
               className={`nav-item ${activeTab === "career-templates" ? "active" : ""}`}
-              onClick={() => setActiveTab("career-templates")}
+              onClick={() => navigateToRoute("/templates")}
             >
               <IconBookOpen size={18} />
               {"Career Templates"}
@@ -3159,7 +3222,7 @@ function App() {
             </div>
             <button
               className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
-              onClick={() => setActiveTab("settings")}
+              onClick={() => navigateToRoute("/settings")}
             >
               <IconSettings size={18} />
               {"AI settings (BYOK)"}
