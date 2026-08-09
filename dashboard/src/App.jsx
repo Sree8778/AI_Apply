@@ -795,9 +795,7 @@ function App() {
 
   // Helper to check if AI Key is configured based on active provider preference
   const isAiKeyConfigured = () => {
-    if (aiProvider === "huggingface") return !!hfApiKey;
-    if (aiProvider === "gemini") return !!apiKey;
-    return !!apiKey || !!hfApiKey;
+    return (hfApiKey && hfApiKey.trim().length > 0) || (apiKey && apiKey.trim().length > 0);
   };
 
   const getActiveAiKeyName = () => {
